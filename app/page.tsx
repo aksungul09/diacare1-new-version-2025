@@ -237,7 +237,7 @@ export default function HomePage() {
 
         {/* Bottom Text */}
         <div className="mt-8 pt-8 border-t border-border text-center text-sm text-muted-foreground transition-all duration-300 hover:scale-102">
-          <p> © 2025 DiaCare. All rights reserved. Made with 💙 for your health.</p>
+          <p> © 2026 DiaCare. All rights reserved. Made with 💙 for your health.</p>
         </div>
       </footer>
     </div>
