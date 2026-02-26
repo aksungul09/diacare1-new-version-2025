@@ -1,11 +1,17 @@
+// app/api/generate-recipe/route.ts
 import { NextResponse } from "next/server";
-import { openai } from "@/lib/openai";
+import OpenAI from "openai";
 
 export async function POST(req: Request) {
   try {
     const formData = await req.json();
 
-    // Build a prompt that includes ALL user inputs from your form
+    // ✅ Create OpenAI client at runtime inside the function
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+
+    // Build prompt including all user inputs
     const prompt = `
 Generate a diabetes-friendly recipe considering all user inputs:
 
@@ -27,16 +33,18 @@ Ramadan Mode: ${formData.isRamadan ? "Yes" : "No"}
 `;
 
     console.log("[v1] Sending prompt to OpenAI...");
+
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-4o-mini", // or "gpt-3.5-turbo" if needed
       messages: [
         {
           role: "system",
-          content:
-            "You are a professional nutritionist and chef specializing in diabetes-friendly meals."
+          content: "You are a professional nutritionist and chef specializing in diabetes-friendly meals."
         },
         { role: "user", content: prompt }
-      ]
+      ],
+      temperature: 0.7,
+      max_tokens: 2000,
     });
 
     const recipe = response.choices?.[0]?.message?.content || "No recipe returned";
@@ -54,7 +62,7 @@ Ramadan Mode: ${formData.isRamadan ? "Yes" : "No"}
       );
     }
 
-    // Too many requests / rate limit
+    // Rate limit
     if (error.status === 429) {
       return NextResponse.json(
         { error: "Too many requests to OpenAI. Try again later." },
@@ -62,7 +70,7 @@ Ramadan Mode: ${formData.isRamadan ? "Yes" : "No"}
       );
     }
 
-    // Fallback for other errors
+    // Fallback
     return NextResponse.json(
       { error: "Failed to generate recipe. Please try again later." },
       { status: 500 }

@@ -1,5 +1,5 @@
 import OpenAI from "openai";
 
 export const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY, // make sure this is set in your .env.local
+  apiKey: process.env.OPENAI_API_KEY || "dummy-key-to-bypass-build-error", // Ensure build doesn't fail if env var is missing
 });
