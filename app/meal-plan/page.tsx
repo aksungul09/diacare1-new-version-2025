@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useTranslation } from "@/lib/hooks/useTranslation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -17,7 +18,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Heart, Calendar, ChefHat, Plus, Clock, ArrowLeft, ArrowRight, Loader2, Zap } from "lucide-react"
+import { Heart, Calendar, Plus, Zap, ArrowLeft, Loader2 } from "lucide-react"
 import Link from "next/link"
 
 // --- Helper Functions ---
@@ -51,6 +52,9 @@ const sampleMeals = {
 }
 
 export default function MealPlanPage() {
+  const t = useTranslation() // set the language
+  const m = t?.mealPlan || {}
+
   const [currentWeek, setCurrentWeek] = useState(0)
   const [selectedDay, setSelectedDay] = useState("Monday")
   const [isGeneratingPlan, setIsGeneratingPlan] = useState(false)
@@ -63,7 +67,6 @@ export default function MealPlanPage() {
     days: "7",
   })
 
-  // 🧠 Load user profile + auto-set calorie target
   useEffect(() => {
     const data = localStorage.getItem("userProfile")
     if (data) {
@@ -91,12 +94,12 @@ export default function MealPlanPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(planFormData),
       })
-      if (!response.ok) throw new Error("Failed to generate meal plan")
+      if (!response.ok) throw new Error(m?.mealplan_api_failed || "Failed to generate meal plan")
       const data = await response.json()
       setGeneratedMealPlan(data.mealPlan)
     } catch (error) {
       console.error("Error generating meal plan:", error)
-      alert("Failed to generate meal plan. Please check your API key and try again.")
+      alert(m?.mealplan_api_alert || "Failed to generate meal plan. Please check your API key and try again.")
     } finally {
       setIsGeneratingPlan(false)
     }
@@ -125,12 +128,12 @@ export default function MealPlanPage() {
           <div className="flex items-center gap-4">
             <Link href="/dashboard" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
               <ArrowLeft className="h-4 w-4" />
-              Back to Dashboard
+              {m?.back_dashboard || "Back to Dashboard"}
             </Link>
             <Separator orientation="vertical" className="h-6" />
             <div className="flex items-center gap-2">
               <Heart className="h-6 w-6 text-primary" />
-              <span className="text-lg font-serif font-semibold">Diacare</span>
+              <span className="text-lg font-serif font-semibold">DiaCare</span>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -138,18 +141,20 @@ export default function MealPlanPage() {
               <DialogTrigger asChild>
                 <Button variant="outline">
                   <Zap className="h-4 w-4 mr-2" />
-                  Generate AI Plan
+                  {m?.generate_plan || "Generate AI Plan"}
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-md">
                 <DialogHeader>
-                  <DialogTitle>Generate AI Meal Plan</DialogTitle>
-                  <DialogDescription>Create a personalized weekly meal plan based on your profile and preferences</DialogDescription>
+                  <DialogTitle>{m?.generate_plan_title || "Generate AI Meal Plan"}</DialogTitle>
+                  <DialogDescription>
+                    {m?.generate_plan_description || "Create a personalized weekly meal plan based on your profile and preferences"}
+                  </DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="dailyCalories">Daily Calorie Target</Label>
+                    <Label htmlFor="dailyCalories">{m?.daily_calorie_target || "Daily Calorie Target"}</Label>
                     <Input
                       id="dailyCalories"
                       placeholder="e.g., 1800"
@@ -159,7 +164,7 @@ export default function MealPlanPage() {
                   </div>
 
                   <div>
-                    <Label className="text-sm font-medium mb-3 block">Dietary Restrictions</Label>
+                    <Label className="text-sm font-medium mb-3 block">{m?.dietary_restrictions || "Dietary Restrictions"}</Label>
                     <div className="grid grid-cols-2 gap-2">
                       {["Vegetarian", "Vegan", "Gluten-free", "Dairy-free", "Low-carb", "Keto"].map((restriction) => (
                         <div key={restriction} className="flex items-center space-x-2">
@@ -175,10 +180,10 @@ export default function MealPlanPage() {
                   </div>
 
                   <div>
-                    <Label htmlFor="preferences">Additional Preferences</Label>
+                    <Label htmlFor="preferences">{m?.additional_preferences || "Additional Preferences"}</Label>
                     <Textarea
                       id="preferences"
-                      placeholder="Any foods you love or want to avoid?"
+                      placeholder={m?.preferences_placeholder || "Any foods you love or want to avoid?"}
                       value={planFormData.preferences}
                       onChange={(e) => setPlanFormData((prev) => ({ ...prev, preferences: e.target.value }))}
                       rows={2}
@@ -189,19 +194,19 @@ export default function MealPlanPage() {
                     {isGeneratingPlan ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Generating Plan...
+                        {m?.generating_plan || "Generating Plan..."}
                       </>
                     ) : (
                       <>
                         <Zap className="h-4 w-4 mr-2" />
-                        Generate Plan
+                        {m?.generate_plan || "Generate Plan"}
                       </>
                     )}
                   </Button>
                 </div>
               </DialogContent>
             </Dialog>
-            <Button><Plus className="h-4 w-4 mr-2" />Add Meal</Button>
+            <Button><Plus className="h-4 w-4 mr-2" />{m?.add_meal || "Add Meal"}</Button>
           </div>
         </div>
       </header>
@@ -211,9 +216,9 @@ export default function MealPlanPage() {
         <div className="max-w-6xl mx-auto">
           <div className="mb-8">
             <h1 className="text-3xl font-serif font-bold mb-2 flex items-center gap-3">
-              <Calendar className="h-8 w-8 text-primary" /> Meal Plan
+              <Calendar className="h-8 w-8 text-primary" /> {m?.meal_plan || "Meal Plan"}
             </h1>
-            <p className="text-muted-foreground text-lg">Plan your diabetes-friendly meals for the week ahead.</p>
+            <p className="text-muted-foreground text-lg">{m?.mealplan_intro || "Plan your diabetes-friendly meals for the week ahead."}</p>
           </div>
 
           {/* AI Generated Plan */}
@@ -221,10 +226,10 @@ export default function MealPlanPage() {
             <Card className="mb-8 border-primary/20 bg-primary/5">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Zap className="h-5 w-5 text-primary" /> AI Generated Meal Plan
+                  <Zap className="h-5 w-5 text-primary" /> {m?.ai_generated_plan || "AI Generated Meal Plan"}
                 </CardTitle>
                 <CardDescription>
-                  {generatedMealPlan.totalDays}-day plan • {generatedMealPlan.dailyCalories} calories/day
+                  {generatedMealPlan.totalDays}-day plan • {generatedMealPlan.dailyCalories} cal/day
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -240,21 +245,18 @@ export default function MealPlanPage() {
                           </div>
                         ))}
                       </div>
-                      <div className="mt-2 pt-2 border-t text-sm font-medium">Total: {day.totalCalories} cal</div>
+                      <div className="mt-2 pt-2 border-t text-sm font-medium">{m?.total || "Total"}: {day.totalCalories} cal</div>
                     </div>
                   ))}
                 </div>
                 <div className="flex gap-2">
-                  <Button size="sm">Apply to Calendar</Button>
-                  <Button variant="outline" size="sm">View Full Plan</Button>
-                  <Button variant="ghost" size="sm" onClick={() => setGeneratedMealPlan(null)}>Dismiss</Button>
+                  <Button size="sm">{m?.apply_to_calendar || "Apply to Calendar"}</Button>
+                  <Button variant="outline" size="sm">{m?.view_full_plan || "View Full Plan"}</Button>
+                  <Button variant="ghost" size="sm" onClick={() => setGeneratedMealPlan(null)}>{m?.dismiss || "Dismiss"}</Button>
                 </div>
               </CardContent>
             </Card>
           )}
-
-          {/* Rest of your daily planner UI (unchanged) */}
-          {/* You can keep your previous Weekly Overview + Daily Summary here */}
         </div>
       </div>
     </div>

@@ -18,9 +18,13 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select"
+import { useTranslation } from "@/lib/hooks/useTranslation"
 
 export default function RegisterPage() {
+  const t = useTranslation()
+  const r = t.register
   const router = useRouter()
+
   const [form, setForm] = useState({
     username: "",
     name: "",
@@ -33,13 +37,15 @@ export default function RegisterPage() {
     sex: "",
     activityLevel: "",
   })
+
   const [loading, setLoading] = useState(false)
   const [showConfetti, setShowConfetti] = useState(false)
   const [windowSize, setWindowSize] = useState({ width: 0, height: 0 })
 
-  // 🎉 Handle confetti size on resize
   useEffect(() => {
-    const handleResize = () => setWindowSize({ width: window.innerWidth, height: window.innerHeight })
+    const handleResize = () =>
+      setWindowSize({ width: window.innerWidth, height: window.innerHeight })
+
     handleResize()
     window.addEventListener("resize", handleResize)
     return () => window.removeEventListener("resize", handleResize)
@@ -54,33 +60,35 @@ export default function RegisterPage() {
     setLoading(true)
 
     try {
-      // 1️⃣ Create user in Supabase Auth
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: form.email,
         password: form.password,
         options: {
-          data: { name: form.name, username: form.username },
+          data: {
+            name: form.name,
+            username: form.username,
+          },
         },
       })
 
       if (signUpError) {
         if (signUpError.message.toLowerCase().includes("already registered")) {
-          toast("This email is already registered. Redirecting to login...", { icon: "ℹ️" })
+          toast(r.emailRegistered || "Already registered. Try to log in.")
           setTimeout(() => router.push("/login"), 2500)
-        } else toast.error(signUpError.message)
+        } else {
+          toast.error(signUpError.message)
+        }
+        setLoading(false)
         return
       }
 
       const user = data?.user
       if (!user) {
-        toast.error("Unexpected: No user data returned. Try again.")
+        toast.error(r.registrationError || "Registration failed. Please try again.")
+        setLoading(false)
         return
       }
 
-      // 2️⃣ Wait for Supabase to initialize the session
-      await new Promise((res) => setTimeout(res, 800))
-
-      // 3️⃣ Insert or update profile
       const { error: profileError } = await supabase
         .from("profiles")
         .upsert(
@@ -94,38 +102,26 @@ export default function RegisterPage() {
             weight: form.weight,
             height: form.height,
             sex: form.sex,
-            activitylevel: form.activitylevel,
+            activitylevel: form.activityLevel,
           },
           { onConflict: "id" }
         )
 
       if (profileError) {
-        console.error("Profile insert error:", profileError)
-        toast.error("Could not save your profile. Please try again.")
+        toast.error(profileError.message || r.profileSaveError || "Error saving profile.")
+        setLoading(false)
         return
       }
 
-      // 4️⃣ Optional welcome email (Edge Function)
-      try {
-        await fetch("https://dzwewqwcotfqwcidtsyy.supabase.co/functions/v1/super-action", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: form.email, name: form.name }),
-        })
-      } catch {
-        console.warn("Welcome email skipped (Edge Function not deployed).")
-      }
-
-      // 5️⃣ Success
       setShowConfetti(true)
-      toast.success("🎉 Welcome to DiaCare! Your account was created successfully.")
+      toast.success(r.welcomeAccount || "Welcome! Your account has been created.")
+
       setTimeout(() => {
         setShowConfetti(false)
         router.push("/dashboard")
       }, 3000)
     } catch (err: any) {
-      console.error("Registration error:", err)
-      toast.error(err?.message || "Unexpected error during registration.")
+      toast.error(err?.message || r.registrationError || "Registration failed.")
     } finally {
       setLoading(false)
     }
@@ -137,9 +133,6 @@ export default function RegisterPage() {
         <Confetti
           width={windowSize.width}
           height={windowSize.height}
-          numberOfPieces={300}
-          gravity={0.25}
-          wind={0.01}
           recycle={false}
         />
       )}
@@ -153,41 +146,55 @@ export default function RegisterPage() {
       <Card className="w-full max-w-md shadow-lg border border-gray-200 bg-white relative z-10">
         <CardHeader>
           <CardTitle className="text-center text-2xl font-bold text-gray-800">
-            Create Your DiaCare Account
+            {r.title}
           </CardTitle>
         </CardHeader>
 
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label>Username</Label>
-              <Input name="username" value={form.username} onChange={handleInputChange} required />
-            </div>
-
-            <div>
-              <Label>Full Name</Label>
-              <Input name="name" value={form.name} onChange={handleInputChange} required />
-            </div>
-
-            <div>
-              <Label>Email</Label>
-              <Input type="email" name="email" value={form.email} onChange={handleInputChange} required />
-            </div>
-
-            <div>
-              <Label>Phone Number</Label>
+              <Label>{r.username}</Label>
               <Input
-                type="tel"
-                name="phone"
-                value={form.phone}
+                name="username"
+                value={form.username}
                 onChange={handleInputChange}
-                placeholder="+998 90 123 45 67"
                 required
               />
             </div>
 
             <div>
-              <Label>Password</Label>
+              <Label>{r.fullName}</Label>
+              <Input
+                name="name"
+                value={form.name}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+
+            <div>
+              <Label>{r.email}</Label>
+              <Input
+                type="email"
+                name="email"
+                value={form.email}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+
+            <div>
+              <Label>{r.phone}</Label>
+              <Input
+                name="phone"
+                value={form.phone}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+
+            <div>
+              <Label>{r.password}</Label>
               <Input
                 type="password"
                 name="password"
@@ -199,53 +206,76 @@ export default function RegisterPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Age</Label>
-                <Input name="age" type="number" value={form.age} onChange={handleInputChange} required />
+                <Label>{r.age}</Label>
+                <Input
+                  type="number"
+                  name="age"
+                  value={form.age}
+                  onChange={handleInputChange}
+                  required
+                />
               </div>
 
-              {/* 🧍 Sex Dropdown (now visible) */}
               <div>
-                <Label>Sex</Label>
-                <Select
-                  value={form.sex}
-                  onValueChange={(value) => setForm((prev) => ({ ...prev, sex: value }))}>
-                  <SelectTrigger className="border border-gray-300 bg-white text-gray-800 hover:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none z-20">
-                    <SelectValue placeholder="Select" />
-                  </SelectTrigger>
-                  <SelectContent className="z-50 bg-white shadow-md border border-gray-200">
-                    <SelectItem value="male">Male</SelectItem>
-                    <SelectItem value="female">Female</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label>{r.weight}</Label>
+                <Input
+                  type="number"
+                  name="weight"
+                  value={form.weight}
+                  onChange={handleInputChange}
+                  required
+                />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Weight (kg)</Label>
-                <Input name="weight" type="number" value={form.weight} onChange={handleInputChange} required />
+                <Label>{r.height}</Label>
+                <Input
+                  type="number"
+                  name="height"
+                  value={form.height}
+                  onChange={handleInputChange}
+                  required
+                />
               </div>
+
               <div>
-                <Label>Height (cm)</Label>
-                <Input name="height" type="number" value={form.height} onChange={handleInputChange} required />
+                <Label>{r.sex}</Label>
+                <Select
+                  value={form.sex}
+                  onValueChange={(value) =>
+                    setForm((prev) => ({ ...prev, sex: value }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="male">{r.male}</SelectItem>
+                    <SelectItem value="female">{r.female}</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
-            {/* 🏃 Activity Level (now visible + corrected name) */}
             <div>
-              <Label>Activity Level</Label>
+              <Label>{r.activityLevel}</Label>
               <Select
                 value={form.activityLevel}
-                onValueChange={(value) => setForm((prev) => ({ ...prev, activityLevel: value }))}>
-                <SelectTrigger className="border border-gray-300 bg-white text-gray-800 hover:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none z-20">
-                  <SelectValue placeholder="Select activity level" />
+                onValueChange={(value) =>
+                  setForm((prev) => ({ ...prev, activityLevel: value }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select" />
                 </SelectTrigger>
-                <SelectContent className="z-50 bg-white shadow-md border border-gray-200">
-                  <SelectItem value="sedentary">Sedentary (little or no exercise)</SelectItem>
-                  <SelectItem value="light">Light (1–3 days/week)</SelectItem>
-                  <SelectItem value="moderate">Moderate (3–5 days/week)</SelectItem>
-                  <SelectItem value="active">Active (6–7 days/week)</SelectItem>
-                  <SelectItem value="very_active">Very Active (hard exercise/job)</SelectItem>
+                <SelectContent className="bg-white">
+                  <SelectItem value="sedentary">{r.activityOptions.sedentary}</SelectItem>
+                  <SelectItem value="light">{r.activityOptions.light}</SelectItem>
+                  <SelectItem value="moderate">{r.activityOptions.moderate}</SelectItem>
+                  <SelectItem value="active">{r.activityOptions.active}</SelectItem>
+                  <SelectItem value="very_active">{r.activityOptions.very_active}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -253,14 +283,18 @@ export default function RegisterPage() {
             <Button
               type="submit"
               className="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white"
-              disabled={loading}>
-              {loading ? "Creating Account..." : "Register"}
+              disabled={loading}
+            >
+              {loading ? r.creatingAccount : r.register}
             </Button>
 
             <p className="text-center text-sm text-gray-600 mt-2">
-              Already have an account?{" "}
-              <Link href="/login" className="text-blue-600 font-medium hover:underline">
-                Login
+              {r.alreadyAccount}{" "}
+              <Link
+                href="/login"
+                className="text-blue-600 font-medium hover:underline"
+              >
+                {r.login}
               </Link>
             </p>
           </form>

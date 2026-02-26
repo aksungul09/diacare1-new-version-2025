@@ -1,113 +1,74 @@
-import { type NextRequest, NextResponse } from "next/server"
-import OpenAI from "openai"
+import { NextResponse } from "next/server";
+import { openai } from "@/lib/openai";
 
-// Yuqori darajadagi (top-level) client o'chirildi - BU TO'G'RI
+export async function POST(req: Request) {
 
-export async function POST(request: NextRequest) {
+  console.log("OPENAI_API_KEY exists?", !!process.env.OPENAI_API_KEY);
+  console.log("OPENAI_API_KEY length:", process.env.OPENAI_API_KEY?.length);
   try {
-    const body = await request.json()
-    const { calories, mealType, dietaryRestrictions, preferences, cookingTime, servings } = body
+    const formData = await req.json();
 
-    console.log("[v0] OpenAI API Key exists:", !!process.env.OPENAI_API_KEY)
-    console.log("[v0] OpenAI API Key length:", process.env.OPENAI_API_KEY?.length || 0)
+    // Build a prompt that includes ALL user inputs from your form
+    const prompt = `
+Generate a diabetes-friendly recipe considering all user inputs:
 
-    // 1. API kaliti tekshiriladi
-    if (!process.env.OPENAI_API_KEY) {
-      return NextResponse.json(
-        {
-          error: "API key not configured. Please add your OPENAI_API_KEY to the environment variables.",
-          instructions: "Get your API key from https://platform.openai.com/api-keys",
-        },
-        { status: 500 },
-      )
-    }
+Calories: ${formData.calories}
+Meal Type: ${formData.mealType}
+Servings: ${formData.servings}
+Cooking Time: ${formData.cookingTime}
+Dietary Restrictions: ${formData.dietaryRestrictions.join(", ")}
+Preferences: ${formData.preferences}
+Cultural Preference: ${formData.culturalPreference}
+Religious Restriction: ${formData.religiousRestriction}
+Preferred Cuisine: ${formData.preferredCuisine}
+Available Ingredients: ${formData.availableIngredients}
+Ingredients to Avoid: ${formData.avoidIngredients}
+Health Goal: ${formData.healthGoal}
+Skill Level: ${formData.skillLevel}
+Budget: ${formData.budget}
+Ramadan Mode: ${formData.isRamadan ? "Yes" : "No"}
+`;
 
-    // 2. ✅ Client faqat funksiya ichida (runtime) yaratilmoqda
-    const openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    })
-
-    const prompt = `Create a diabetes-friendly ${mealType} recipe with the following requirements:
-- Target calories: ${calories} per serving
-- Servings: ${servings}
-- Maximum cooking time: ${cookingTime} minutes
-- Dietary restrictions: ${dietaryRestrictions.join(", ") || "None"}
-- Additional preferences: ${preferences || "None"}
-
-Please provide a detailed recipe in JSON format with the following structure:
-{
-  "title": "Recipe name",
-  "description": "Brief description",
-  "prepTime": "X minutes",
-  "cookTime": "X minutes",
-  "servings": "${servings}",
-  "calories": "X per serving",
-  "carbs": "Xg",
-  "protein": "Xg",
-  "fat": "Xg",
-  "fiber": "Xg",
-  "glycemicIndex": "Low/Medium/High",
-  "ingredients": ["ingredient 1", "ingredient 2", ...],
-  "instructions": ["step 1", "step 2", ...],
-  "nutritionNotes": ["benefit 1", "benefit 2", ...]
-}
-
-Focus on diabetes-friendly ingredients with low glycemic index, high fiber, and balanced macronutrients.
-Return only valid JSON — no extra explanations or markdown formatting.`
-
-    console.log("[v0] Sending prompt to OpenAI...")
-
+    console.log("[v1] Sending prompt to OpenAI...");
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini", // or "gpt-4o" if you have access
+      model: "gpt-3.5-turbo",
       messages: [
         {
           role: "system",
-          content: "You are a professional nutritionist and chef specializing in diabetes-friendly meals.",
+          content:
+            "You are a professional nutritionist and chef specializing in diabetes-friendly meals."
         },
-        { role: "user", content: prompt },
-      ],
-      temperature: 0.7,
-      max_tokens: 2000,
-    })
+        { role: "user", content: prompt }
+      ]
+    });
 
-    console.log("[v0] OpenAI API response received successfully")
+    const recipe = response.choices?.[0]?.message?.content || "No recipe returned";
 
-    const recipeText = response.choices?.[0]?.message?.content || "{}"
-    let recipe
+    return NextResponse.json({ recipe });
 
-    try {
-      const jsonMatch = recipeText.match(/\{[\s\S]*\}/)
-      recipe = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(recipeText)
-    } catch (parseError) {
-      console.error("[v0] Failed to parse recipe JSON:", parseError)
-      recipe = {
-        title: "Custom Diabetes-Friendly Recipe",
-        description: "A personalized recipe created based on your preferences",
-        prepTime: "15 minutes",
-        cookTime: cookingTime || "20 minutes",
-        servings,
-        calories: `${calories} per serving`,
-        carbs: "30g",
-        protein: "20g",
-        fat: "10g",
-        fiber: "8g",
-        glycemicIndex: "Low",
-        ingredients: ["Please check the raw response for ingredients"],
-        instructions: ["Please check the raw response for instructions"],
-        nutritionNotes: ["Diabetes-friendly recipe", "Balanced macronutrients"],
-        rawResponse: recipeText,
-      }
+  } catch (error: any) {
+    console.error("[v1] Recipe generation error:", error);
+
+    // Quota exceeded
+    if (error.code === "insufficient_quota") {
+      return NextResponse.json(
+        { error: "OpenAI quota exceeded. Please check your plan or billing." },
+        { status: 429 }
+      );
     }
 
-    return NextResponse.json({ recipe })
-  } catch (error) {
-    console.error("[v0] Recipe generation error:", error)
+    // Too many requests / rate limit
+    if (error.status === 429) {
+      return NextResponse.json(
+        { error: "Too many requests to OpenAI. Try again later." },
+        { status: 429 }
+      );
+    }
+
+    // Fallback for other errors
     return NextResponse.json(
-      {
-        error: "Failed to generate recipe. Please check your API key and try again.",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 },
-    )
+      { error: "Failed to generate recipe. Please try again later." },
+      { status: 500 }
+    );
   }
 }

@@ -12,10 +12,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Heart, User, Settings, Shield, ArrowLeft, Save } from "lucide-react"
 import Link from "next/link"
 import { Separator } from "@/components/ui/separator"
+import { useTranslation } from "@/lib/hooks/useTranslation"
 
 // Helper functions
 function calculateBMR(sex: string, weight: number, height: number, age: number) {
-  // Mifflin-St Jeor Equation
   if (sex === "male") return 10 * weight + 6.25 * height - 5 * age + 5
   return 10 * weight + 6.25 * height - 5 * age - 161
 }
@@ -32,6 +32,7 @@ function calculateDailyCalories(bmr: number, activityLevel: string) {
 }
 
 export default function ProfilePage() {
+  const t = useTranslation() 
   const router = useRouter()
   const [user, setUser] = useState<any>(null)
   const [profile, setProfile] = useState<any>(null)
@@ -105,7 +106,7 @@ export default function ProfilePage() {
     setProfile((prev: any) => ({
       ...prev,
       bmr: Number(bmr.toFixed(2)),
-      targetcalories: calories, // supabase column name
+      targetcalories: calories,
     }))
   }, [profile?.sex, profile?.weight, profile?.height, profile?.age, profile?.activityLevel])
 
@@ -134,8 +135,8 @@ export default function ProfilePage() {
     if (!user) return
     setIsEditing(false)
     const { error } = await supabase.from("profiles").update(profile).eq("id", user.id)
-    if (error) alert("Error saving profile: " + error.message)
-    else alert("Profile updated successfully!")
+    if (error) alert(t?.errorSaving || "Error saving profile: " + error.message)
+    else alert(t?.profileUpdated || "Profile updated successfully!")
   }
 
   const handleRestrictionChange = (r: string, checked: boolean) => {
@@ -148,7 +149,7 @@ export default function ProfilePage() {
   }
 
   const handleDeleteAccount = async () => {
-    if (!confirm("Are you sure you want to delete your account?")) return
+    if (!confirm(t?.confirmDelete || "Are you sure you want to delete your account?")) return
     await supabase.from("profiles").delete().eq("id", user.id)
     await supabase.auth.signOut()
     router.push("/register")
@@ -156,18 +157,18 @@ export default function ProfilePage() {
 
   const handlePasswordChange = async () => {
     if (!changePassword.new || changePassword.new !== changePassword.confirm) {
-      alert("Passwords do not match")
+      alert(t?.passwordMismatch || "Passwords do not match")
       return
     }
     const { error } = await supabase.auth.updateUser({ password: changePassword.new })
     if (error) alert(error.message)
     else {
-      alert("Password updated successfully!")
+      alert(t?.passwordUpdated || "Password updated successfully!")
       setChangePassword({ new: "", confirm: "" })
     }
   }
 
-  if (loading) return <p className="text-center mt-10">Loading profile...</p>
+  if (loading) return <p className="text-center mt-10">{t?.loadingProfile || "Loading profile..."}</p>
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -179,7 +180,7 @@ export default function ProfilePage() {
               href="/dashboard"
               className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
             >
-              <ArrowLeft className="h-4 w-4" /> Back to Dashboard
+              <ArrowLeft className="h-4 w-4" /> {t?.backToDashboard || "Back to Dashboard"}
             </Link>
             <Separator orientation="vertical" className="h-6" />
             <div className="flex items-center gap-2">
@@ -192,15 +193,15 @@ export default function ProfilePage() {
             {isEditing ? (
               <>
                 <Button variant="outline" onClick={() => setIsEditing(false)}>
-                  Cancel
+                  {t?.cancel || "Cancel"}
                 </Button>
                 <Button onClick={handleSave}>
-                  <Save className="h-4 w-4 mr-2" /> Save
+                  <Save className="h-4 w-4 mr-2" /> {t?.save || "Save"}
                 </Button>
               </>
             ) : (
               <Button onClick={() => setIsEditing(true)}>
-                <Settings className="h-4 w-4 mr-2" /> Edit
+                <Settings className="h-4 w-4 mr-2" /> {t?.edit || "Edit"}
               </Button>
             )}
           </div>
@@ -211,27 +212,27 @@ export default function ProfilePage() {
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-3xl font-serif font-bold mb-6 flex items-center gap-3">
-            <User className="h-8 w-8 text-primary" /> Profile Settings
+            <User className="h-8 w-8 text-primary" /> {t?.profileSettings || "Profile Settings"}
           </h1>
 
           <Tabs defaultValue="personal" className="space-y-6">
             <TabsList className="grid grid-cols-4 w-full">
-              <TabsTrigger value="personal">Personal</TabsTrigger>
-              <TabsTrigger value="health">Health</TabsTrigger>
-              <TabsTrigger value="preferences">Diet</TabsTrigger>
-              <TabsTrigger value="settings">Settings</TabsTrigger>
+              <TabsTrigger value="personal">{t?.personalTab || "Personal"}</TabsTrigger>
+              <TabsTrigger value="health">{t?.healthTab || "Health"}</TabsTrigger>
+              <TabsTrigger value="preferences">{t?.dietTab || "Diet"}</TabsTrigger>
+              <TabsTrigger value="settings">{t?.settingsTab || "Settings"}</TabsTrigger>
             </TabsList>
 
             {/* PERSONAL TAB */}
             <TabsContent value="personal">
               <Card>
                 <CardHeader>
-                  <CardTitle>Personal Information</CardTitle>
-                  <CardDescription>Update your details</CardDescription>
+                  <CardTitle>{t?.personalInfo || "Personal Information"}</CardTitle>
+                  <CardDescription>{t?.updateDetails || "Update your details"}</CardDescription>
                 </CardHeader>
                 <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <Label>Full Name</Label>
+                    <Label>{t?.fullName || "Full Name"}</Label>
                     <Input
                       value={profile.name || ""}
                       disabled={!isEditing}
@@ -239,11 +240,11 @@ export default function ProfilePage() {
                     />
                   </div>
                   <div>
-                    <Label>Email</Label>
+                    <Label>{t?.email || "Email"}</Label>
                     <Input value={profile.email || ""} disabled />
                   </div>
                   <div>
-                    <Label>Age</Label>
+                    <Label>{t?.age || "Age"}</Label>
                     <Input
                       type="number"
                       value={profile.age || ""}
@@ -252,16 +253,16 @@ export default function ProfilePage() {
                     />
                   </div>
                   <div>
-                    <Label>Sex</Label>
+                    <Label>{t?.sex || "Sex"}</Label>
                     <select
                       className="border border-border rounded-md p-2 w-full text-sm"
                       disabled={!isEditing}
                       value={profile.sex || ""}
                       onChange={(e) => setProfile({ ...profile, sex: e.target.value })}
                     >
-                      <option value="">Select</option>
-                      <option value="male">Male</option>
-                      <option value="female">Female</option>
+                      <option value="">{t?.select || "Select"}</option>
+                      <option value="male">{t?.male || "Male"}</option>
+                      <option value="female">{t?.female || "Female"}</option>
                     </select>
                   </div>
                 </CardContent>
@@ -272,13 +273,13 @@ export default function ProfilePage() {
             <TabsContent value="health">
               <Card>
                 <CardHeader>
-                  <CardTitle>Health Information</CardTitle>
-                  <CardDescription>Track your physical details</CardDescription>
+                  <CardTitle>{t?.healthInfo || "Health Information"}</CardTitle>
+                  <CardDescription>{t?.trackPhysical || "Track your physical details"}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                     <div>
-                      <Label>Weight (kg)</Label>
+                      <Label>{t?.weight || "Weight (kg)"}</Label>
                       <Input
                         type="number"
                         value={profile.weight || ""}
@@ -287,7 +288,7 @@ export default function ProfilePage() {
                       />
                     </div>
                     <div>
-                      <Label>Height (cm)</Label>
+                      <Label>{t?.height || "Height (cm)"}</Label>
                       <Input
                         type="number"
                         value={profile.height || ""}
@@ -296,7 +297,7 @@ export default function ProfilePage() {
                       />
                     </div>
                     <div>
-                      <Label>Activity Level</Label>
+                      <Label>{t?.activityLevel || "Activity Level"}</Label>
                       <select
                         className="border border-border rounded-md p-2 w-full text-sm"
                         value={profile.activityLevel || "moderate"}
@@ -305,21 +306,21 @@ export default function ProfilePage() {
                           setProfile({ ...profile, activityLevel: e.target.value })
                         }
                       >
-                        <option value="sedentary">Sedentary</option>
-                        <option value="light">Light</option>
-                        <option value="moderate">Moderate</option>
-                        <option value="active">Active</option>
-                        <option value="very_active">Very Active</option>
+                        <option value="sedentary">{t?.sedentary || "Sedentary"}</option>
+                        <option value="light">{t?.light || "Light"}</option>
+                        <option value="moderate">{t?.moderate || "Moderate"}</option>
+                        <option value="active">{t?.active || "Active"}</option>
+                        <option value="very_active">{t?.veryActive || "Very Active"}</option>
                       </select>
                     </div>
                   </div>
 
                   <div>
-                    <Label>BMR (kcal/day)</Label>
+                    <Label>{t?.bmr || "BMR (kcal/day)"}</Label>
                     <Input value={profile.bmr?.toFixed(2) || ""} disabled />
                   </div>
                   <div>
-                    <Label>Daily Calorie Target</Label>
+                    <Label>{t?.dailyCalories || "Daily Calorie Target"}</Label>
                     <Input value={profile.targetcalories || ""} disabled />
                   </div>
                 </CardContent>
@@ -330,14 +331,14 @@ export default function ProfilePage() {
             <TabsContent value="preferences">
               <Card>
                 <CardHeader>
-                  <CardTitle>Dietary Restrictions</CardTitle>
-                  <CardDescription>Select all that apply</CardDescription>
+                  <CardTitle>{t?.dietaryRestrictions || "Dietary Restrictions"}</CardTitle>
+                  <CardDescription>{t?.selectAll || "Select all that apply"}</CardDescription>
                 </CardHeader>
                 <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   {["vegetarian", "vegan", "gluten-free", "low-sodium", "keto", "heart-healthy", "halal", "other"].map((r) => (
                     <div key={r} className="flex items-center space-x-2">
                       <Checkbox
-                        checked={profile.dietaryRestrictions.includes(r)}
+                        checked={profile.dietaryRestrictions?.includes(r)}
                         disabled={!isEditing}
                         onCheckedChange={(checked) => handleRestrictionChange(r, checked as boolean)}
                       />
@@ -353,12 +354,12 @@ export default function ProfilePage() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Shield className="h-5 w-5" /> Account Settings
+                    <Shield className="h-5 w-5" /> {t?.accountSettings || "Account Settings"}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label>New Password</Label>
+                    <Label>{t?.newPassword || "New Password"}</Label>
                     <Input
                       type="password"
                       value={changePassword.new}
@@ -366,7 +367,7 @@ export default function ProfilePage() {
                         setChangePassword({ ...changePassword, new: e.target.value })
                       }
                     />
-                    <Label>Confirm Password</Label>
+                    <Label>{t?.confirmPassword || "Confirm Password"}</Label>
                     <Input
                       type="password"
                       value={changePassword.confirm}
@@ -374,14 +375,14 @@ export default function ProfilePage() {
                         setChangePassword({ ...changePassword, confirm: e.target.value })
                       }
                     />
-                    <Button onClick={handlePasswordChange}>Change Password</Button>
+                    <Button onClick={handlePasswordChange}>{t?.changePassword || "Change Password"}</Button>
                   </div>
                   <Separator />
                   <Button
                     className="w-full bg-red-600 hover:bg-red-700 text-white"
                     onClick={handleDeleteAccount}
                   >
-                    Delete Account
+                    {t?.deleteAccount || "Delete Account"}
                   </Button>
                 </CardContent>
               </Card>
