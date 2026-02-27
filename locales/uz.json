@@ -62,7 +62,7 @@
     "generateError": "Retsept yaratilmadi. Iltimos qayta urinib ko'ring."
   },
   "register": {
-    "title": "DiaCare hisobini yaratish",
+    "title": "DiaCare akkount yaratish",
     "username": "Foydalanuvchi nomi",
     "fullName": "To'liq ism",
     "email": "Email",
