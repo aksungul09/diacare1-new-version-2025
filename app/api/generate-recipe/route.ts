@@ -10,39 +10,70 @@ export async function POST(req: Request) {
 
     // Build a prompt that includes ALL user inputs from your form
     const prompt = `
-Generate a diabetes-friendly recipe considering all user inputs:
+Generate a diabetes-friendly recipe considering all user inputs below. The recipe must be ethical, interpretable, clear, and specifically tailored to the user's health goals and cultural/religious needs. Provide safe, accurate, and culturally appropriate recommendations.
 
-Calories: ${formData.calories}
-Meal Type: ${formData.mealType}
-Servings: ${formData.servings}
-Cooking Time: ${formData.cookingTime}
-Dietary Restrictions: ${formData.dietaryRestrictions.join(", ")}
-Preferences: ${formData.preferences}
-Cultural Preference: ${formData.culturalPreference}
-Religious Restriction: ${formData.religiousRestriction}
-Preferred Cuisine: ${formData.preferredCuisine}
-Available Ingredients: ${formData.availableIngredients}
-Ingredients to Avoid: ${formData.avoidIngredients}
-Health Goal: ${formData.healthGoal}
-Skill Level: ${formData.skillLevel}
-Budget: ${formData.budget}
-Ramadan Mode: ${formData.isRamadan ? "Yes" : "No"}
+**User Inputs:**
+- Calories: ${formData.calories}
+- Meal Type: ${formData.mealType}
+- Servings: ${formData.servings}
+- Cooking Time: ${formData.cookingTime}
+- Dietary Restrictions: ${formData.dietaryRestrictions?.join(", ") || "None"}
+- Cultural Preference: ${formData.culturalPreference || "None"}
+- Religious Restriction: ${formData.religiousRestriction || "None"}
+- Preferred Cuisine: ${formData.preferredCuisine || "None"}
+- Available Ingredients: ${formData.availableIngredients || "Any"}
+- Ingredients to Avoid: ${formData.avoidIngredients || "None"}
+- Health Goal: ${formData.healthGoal || "Manage blood sugar"}
+- Skill Level: ${formData.skillLevel || "Any"}
+- Budget: ${formData.budget || "Any"}
+- Ramadan Mode: ${formData.isRamadan ? "Yes" : "No"}
+
+Respond ONLY with a valid JSON object in exactly the following format. Ensure the JSON is well-formed:
+{
+  "title": "Recipe Title",
+  "description": "A short, appealing description explaining why it is suitable for a diabetes-friendly diet, adhering strictly to the user's inputs.",
+  "glycemicIndex": "Low/Medium/High (estimate based on ingredients)",
+  "ethicalDisclaimer": "Disclaimer: This recipe is AI-generated for informational purposes and should not replace professional medical advice.",
+  "ingredients": [
+    { "item": "1 cup spinach", "reason": "Low in carbs and rich in fiber to prevent blood sugar spikes." }
+  ],
+  "instructions": ["Step 1...", "Step 2..."],
+  "tips": ["Tip 1...", "Tip 2..."],
+  "nutritionalInfo": {
+    "carbs": "10g",
+    "protein": "5g",
+    "fat": "2g",
+    "calories": 150
+  }
+}
 `;
 
     console.log("[v1] Sending prompt to OpenAI...");
     const response = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
+      response_format: { type: "json_object" },
       messages: [
         {
           role: "system",
           content:
-            "You are a professional nutritionist and chef specializing in diabetes-friendly meals."
+            "You are a professional nutritionist and chef specializing in diabetes-friendly meals. Your goal is to provide safe, accurate, interpretable, and culturally appropriate recipes. Ensure strict adherence to dietary, ethical, and religious restrictions. Always output valid JSON."
         },
         { role: "user", content: prompt }
       ]
     });
 
-    const recipe = response.choices?.[0]?.message?.content || "No recipe returned";
+    const responseText = response.choices?.[0]?.message?.content || "{}";
+    let recipe;
+    try {
+      recipe = JSON.parse(responseText);
+    } catch (error) {
+      console.error("Failed to parse JSON response:", error);
+      recipe = {
+        title: "Generated Recipe",
+        description: responseText,
+        glycemicIndex: "Unknown"
+      };
+    }
 
     return NextResponse.json({ recipe });
 

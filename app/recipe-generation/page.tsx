@@ -68,14 +68,14 @@ export default function GenerateRecipePage() {
   }
 
   const dietaryKeyMap: Record<string, keyof typeof t.DietaryRestrictions> = {
-  "Vegetarian": "vegetarian",
-  "Vegan": "vegan",
-  "Gluten-free": "glutenFree",
-  "Dairy-free": "dairyFree",
-  "Low-carb": "lowCarb",
-  "Keto": "keto",
-  "Mediterranean": "mediterranean",
-  "Heart-healthy": "heartHealthy"
+    "Vegetarian": "vegetarian",
+    "Vegan": "vegan",
+    "Gluten-free": "glutenFree",
+    "Dairy-free": "dairyFree",
+    "Low-carb": "lowCarb",
+    "Keto": "keto",
+    "Mediterranean": "mediterranean",
+    "Heart-healthy": "heartHealthy"
   }
 
   const handleGenerateRecipe = async () => {
@@ -105,7 +105,7 @@ export default function GenerateRecipePage() {
       setGeneratedRecipe(data.recipe)
     } catch (err) {
       console.error("Error generating recipe:", err)
-      
+
       // Normalize any error type for alert
       let message = r.generateError || "Error generating recipe"
       if (err instanceof Error) message = err.message
@@ -126,12 +126,12 @@ export default function GenerateRecipePage() {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link href="/dashboard" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
-              <ArrowLeft className="h-4 w-4"/>
+              <ArrowLeft className="h-4 w-4" />
               {t.common.backToDashboard}
             </Link>
-            <Separator orientation="vertical" className="h-6"/>
+            <Separator orientation="vertical" className="h-6" />
             <div className="flex items-center gap-2">
-              <Heart className="h-6 w-6 text-primary"/>
+              <Heart className="h-6 w-6 text-primary" />
               <span className="text-lg font-serif font-semibold">DiaCare</span>
             </div>
           </div>
@@ -142,7 +142,7 @@ export default function GenerateRecipePage() {
         {/* Title */}
         <div className="mb-8">
           <h1 className="text-3xl font-serif font-bold mb-2 flex items-center gap-3">
-            <ChefHat className="h-8 w-8 text-primary"/>
+            <ChefHat className="h-8 w-8 text-primary" />
             {r.title}
           </h1>
           <p className="text-muted-foreground text-lg">{r.description}</p>
@@ -180,7 +180,7 @@ export default function GenerateRecipePage() {
                 <div>
                   <Label>{r.servings}</Label>
                   <Select value={formData.servings} onValueChange={(value) => setFormData(prev => ({ ...prev, servings: value }))}>
-                    <SelectTrigger><SelectValue/></SelectTrigger>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="1">1</SelectItem>
                       <SelectItem value="2">2</SelectItem>
@@ -195,7 +195,7 @@ export default function GenerateRecipePage() {
               <div>
                 <Label>{r.mealType}</Label>
                 <Select value={formData.mealType} onValueChange={(value) => setFormData(prev => ({ ...prev, mealType: value }))}>
-                  <SelectTrigger><SelectValue placeholder={r.selectMealType}/></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={r.selectMealType} /></SelectTrigger>
                   <SelectContent>
                     {!formData.isRamadan && (
                       <>
@@ -298,7 +298,7 @@ export default function GenerateRecipePage() {
               <div>
                 <Label>{r.skillLevel}</Label>
                 <Select value={formData.skillLevel} onValueChange={(value) => setFormData(prev => ({ ...prev, skillLevel: value }))}>
-                  <SelectTrigger><SelectValue placeholder={r.selectSkillLevel}/></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={r.selectSkillLevel} /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="beginner" className="bg-white text-black data-[highlighted]:bg-primary data-[highlighted]:text-white">{r.beginner}</SelectItem>
                     <SelectItem value="intermediate" className="bg-white text-black data-[highlighted]:bg-primary data-[highlighted]:text-white">{r.intermediate}</SelectItem>
@@ -311,7 +311,7 @@ export default function GenerateRecipePage() {
               <div>
                 <Label>{r.budget}</Label>
                 <Select value={formData.budget} onValueChange={(value) => setFormData(prev => ({ ...prev, budget: value }))}>
-                  <SelectTrigger><SelectValue placeholder={r.selectBudget}/></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={r.selectBudget} /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="low" className="bg-white text-black data-[highlighted]:bg-primary data-[highlighted]:text-white">{r.lowBudget}</SelectItem>
                     <SelectItem value="medium" className="bg-white text-black data-[highlighted]:bg-primary data-[highlighted]:text-white">{r.mediumBudget}</SelectItem>
@@ -323,10 +323,10 @@ export default function GenerateRecipePage() {
               {/* Generate Button */}
               <Button onClick={handleGenerateRecipe} disabled={isGenerating || !formData.calories || !formData.mealType} className="w-full">
                 {isGenerating ? <>
-                  <Loader2 className="animate-spin mr-2 h-4 w-4"/>
+                  <Loader2 className="animate-spin mr-2 h-4 w-4" />
                   {r.generating}
                 </> : <>
-                  <Zap className="mr-2 h-4 w-4"/>
+                  <Zap className="mr-2 h-4 w-4" />
                   {r.generateRecipe}
                 </>}
               </Button>
@@ -339,7 +339,7 @@ export default function GenerateRecipePage() {
             {!generatedRecipe && !isGenerating && (
               <Card>
                 <CardContent className="py-12 text-center text-muted-foreground">
-                  <ChefHat className="h-12 w-12 mx-auto mb-4 opacity-50"/>
+                  <ChefHat className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   {t.common.fillPreferences}
                 </CardContent>
               </Card>
@@ -350,9 +350,104 @@ export default function GenerateRecipePage() {
                   <CardTitle>{generatedRecipe.title}</CardTitle>
                   <CardDescription>{generatedRecipe.description}</CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <Badge>{generatedRecipe.glycemicIndex} GI</Badge>
-                  {/* You can expand to show ingredients, instructions, nutrition */}
+                <CardContent className="space-y-6">
+                  {generatedRecipe.ethicalDisclaimer && (
+                    <div className="bg-muted text-muted-foreground text-sm p-4 rounded-lg italic border border-border">
+                      {generatedRecipe.ethicalDisclaimer}
+                    </div>
+                  )}
+
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    <Badge variant="secondary" className="text-sm py-1 px-3 bg-primary/10 text-primary border-primary/20">
+                      {generatedRecipe.glycemicIndex} GI
+                    </Badge>
+                    {generatedRecipe.nutritionalInfo && (
+                      <>
+                        <Badge variant="outline" className="text-sm py-1 px-3">
+                          {generatedRecipe.nutritionalInfo.calories} Calories
+                        </Badge>
+                        <Badge variant="outline" className="text-sm py-1 px-3">
+                          Carbs: {generatedRecipe.nutritionalInfo.carbs}
+                        </Badge>
+                        <Badge variant="outline" className="text-sm py-1 px-3">
+                          Protein: {generatedRecipe.nutritionalInfo.protein}
+                        </Badge>
+                        <Badge variant="outline" className="text-sm py-1 px-3">
+                          Fat: {generatedRecipe.nutritionalInfo.fat}
+                        </Badge>
+                      </>
+                    )}
+                  </div>
+
+                  {generatedRecipe.ingredients && generatedRecipe.ingredients.length > 0 && (
+                    <>
+                      <Separator className="my-6" />
+                      <div>
+                        <h3 className="font-serif font-bold text-xl flex items-center gap-2 mb-4 text-foreground">
+                          <Zap className="h-5 w-5 text-primary" />
+                          Ingredients & Benefits
+                        </h3>
+                        <ul className="space-y-3">
+                          {generatedRecipe.ingredients.map((ing: any, i: number) => (
+                            <li key={i} className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-2 bg-card p-3 rounded-md border border-border/50">
+                              <span className="font-semibold text-foreground min-w-[120px]">
+                                {typeof ing === 'string' ? ing : ing.item}
+                              </span>
+                              {(ing.reason || typeof ing === 'string') && (
+                                <span className="text-muted-foreground text-sm">
+                                  {typeof ing === 'string' ? '' : `— ${ing.reason}`}
+                                </span>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </>
+                  )}
+
+                  {generatedRecipe.instructions && generatedRecipe.instructions.length > 0 && (
+                    <>
+                      <Separator className="my-6" />
+                      <div>
+                        <h3 className="font-serif font-bold text-xl flex items-center gap-2 mb-4 text-foreground">
+                          <ChefHat className="h-5 w-5 text-primary" />
+                          Instructions
+                        </h3>
+                        <ol className="space-y-4">
+                          {generatedRecipe.instructions.map((step: string, i: number) => (
+                            <li key={i} className="flex gap-4">
+                              <span className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm">
+                                {i + 1}
+                              </span>
+                              <p className="text-muted-foreground leading-relaxed pt-1">
+                                {step}
+                              </p>
+                            </li>
+                          ))}
+                        </ol>
+                      </div>
+                    </>
+                  )}
+
+                  {generatedRecipe.tips && generatedRecipe.tips.length > 0 && (
+                    <>
+                      <Separator className="my-6" />
+                      <div>
+                        <h3 className="font-serif font-bold text-xl flex items-center gap-2 mb-4 text-foreground">
+                          <Heart className="h-5 w-5 text-primary" />
+                          Health Tips
+                        </h3>
+                        <ul className="space-y-2">
+                          {generatedRecipe.tips.map((tip: string, i: number) => (
+                            <li key={i} className="flex items-start gap-2 text-muted-foreground bg-primary/5 p-3 rounded-md border border-primary/10">
+                              <Zap className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                              <span className="text-sm leading-relaxed">{tip}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </>
+                  )}
                 </CardContent>
               </Card>
             )}
