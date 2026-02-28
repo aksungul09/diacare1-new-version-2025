@@ -3,8 +3,8 @@ import { openai } from "@/lib/openai";
 
 export async function POST(req: Request) {
 
-  console.log("OPENAI_API_KEY exists?", !!process.env.OPENAI_API_KEY);
-  console.log("OPENAI_API_KEY length:", process.env.OPENAI_API_KEY?.length);
+  console.log("OPENROUTER_API_KEY exists?", !!process.env.OPENROUTER_API_KEY);
+  console.log("OPENROUTER_API_KEY length:", process.env.OPENROUTER_API_KEY?.length);
   try {
     const formData = await req.json();
 
@@ -50,7 +50,7 @@ Respond ONLY with a valid JSON object in exactly the following format. Ensure th
 
     console.log("[v1] Sending prompt to OpenAI...");
     const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model: "openai/gpt-3.5-turbo",
       response_format: { type: "json_object" },
       messages: [
         {
@@ -83,7 +83,7 @@ Respond ONLY with a valid JSON object in exactly the following format. Ensure th
     // Quota exceeded
     if (error.code === "insufficient_quota") {
       return NextResponse.json(
-        { error: "OpenAI quota exceeded. Please check your plan or billing." },
+        { error: "OpenRouter/OpenAI quota exceeded. Please check your plan or billing." },
         { status: 429 }
       );
     }
@@ -91,7 +91,7 @@ Respond ONLY with a valid JSON object in exactly the following format. Ensure th
     // Too many requests / rate limit
     if (error.status === 429) {
       return NextResponse.json(
-        { error: "Too many requests to OpenAI. Try again later." },
+        { error: "Too many requests to OpenRouter. Try again later." },
         { status: 429 }
       );
     }
